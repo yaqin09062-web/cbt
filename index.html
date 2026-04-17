@@ -123,16 +123,15 @@ const countdown = setInterval(() => {
 }, 1000);
 
 // ================= SUBMIT =================
-    let sudahSubmit = false;
-    let sudahSubmit = localStorage.getItem("sudahSubmit") === "true";
+let sudahSubmit = localStorage.getItem("sudahSubmit") === "true";
+
 window.submitQuiz = async function(){
 
     if(sudahSubmit){
         alert("Anda sudah mengerjakan ujian ini!");
-    return;
-localStorage.setItem("sudahSubmit", "true");
+        return;
     }
-    sudahSubmit = true;
+
     let score = 0;
     let nama = document.getElementById("nama").value;
 
@@ -141,6 +140,16 @@ localStorage.setItem("sudahSubmit", "true");
         return;
     }
 
+    // cek semua soal sudah dijawab
+    for(let i = 0; i < questions.length; i++){
+        let ans = document.querySelector(`input[name=q${i}]:checked`);
+        if(!ans){
+            alert("Masih ada soal yang belum dijawab!");
+            return;
+        }
+    }
+
+    // hitung skor
     questions.forEach((q, i) => {
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(ans && parseInt(ans.value) === q.a){
@@ -151,16 +160,26 @@ localStorage.setItem("sudahSubmit", "true");
     document.getElementById("result").innerHTML =
         `Skor Anda: ${score} / ${questions.length}`;
 
-    // kirim ke Firebase
+    // simpan ke Firebase
     try {
         await addDoc(collection(db, "hasil"), {
             nama: nama,
             skor: score,
-            waktu: new Date()
+            waktu: new Date().toLocaleString()
         });
-        console.log("Data tersimpan");
+
+        // ✅ tandai sudah submit (di SINI yang benar)
+        sudahSubmit = true;
+        localStorage.setItem("sudahSubmit", "true");
+
+        // disable tombol
+        document.querySelector("button").disabled = true;
+
+        alert("Jawaban berhasil dikirim!");
+
     } catch (e) {
         console.error("Error:", e);
+        alert("Gagal mengirim data!");
     }
 }
 </script>
