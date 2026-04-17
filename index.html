@@ -87,7 +87,7 @@ const db = getFirestore(app);
 // ================= TOKEN =================
 const daftarToken = ["AHMAD01","SITI02","BUDI03"];
 
-window.login = function()window.login = async function(){
+window.login = async function(){
     let token = document.getElementById("token").value.toUpperCase();
 
     if(!token){
@@ -109,16 +109,6 @@ window.login = function()window.login = async function(){
         alert("Token sudah digunakan!");
         return;
     }
-
-    localStorage.setItem("tokenAktif", token);
-
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("quizForm").style.display = "block";
-    document.getElementById("submitBtn").style.display = "block";
-    document.getElementById("timer").style.display = "block";
-
-    alert("Login berhasil!");
-}
 
     localStorage.setItem("tokenAktif", token);
 
@@ -215,15 +205,18 @@ window.submitQuiz = async function(){
 
     try {
         await addDoc(collection(db, "hasil"), {
-            nama: nama,
-            token: token,
-            skor: score,
-            waktu: new Date().toLocaleString()
-            const tokenRef = doc(db, "token", token);
-await updateDoc(tokenRef, {
-    status: "sudah"     
-        });
+    nama: nama,
+    token: token,
+    skor: score,
+    waktu: new Date().toLocaleString()
+});
 
+// 🔥 PINDAHKAN KE LUAR
+const tokenRef = doc(db, "token", token);
+
+await updateDoc(tokenRef, {
+    status: "sudah"
+});
         sudahSubmit = true;
         localStorage.setItem("sudahSubmit", "true");
         localStorage.setItem("token_"+token, "sudah");
