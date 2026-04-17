@@ -70,7 +70,7 @@ input {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, addDoc, collection, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCNESmtPeWPk8eHNeB5URH36upWMIQ7LcY",
@@ -87,18 +87,38 @@ const db = getFirestore(app);
 // ================= TOKEN =================
 const daftarToken = ["AHMAD01","SITI02","BUDI03"];
 
-window.login = function(){
+window.login = function()window.login = async function(){
     let token = document.getElementById("token").value.toUpperCase();
 
-    if(!daftarToken.includes(token)){
-        alert("Token tidak valid!");
+    if(!token){
+        alert("Token wajib diisi!");
         return;
     }
 
-    if(localStorage.getItem("token_"+token)){
+    const tokenRef = doc(db, "token", token);
+    const tokenSnap = await getDoc(tokenRef);
+
+    if(!tokenSnap.exists()){
+        alert("Token tidak ditemukan!");
+        return;
+    }
+
+    let data = tokenSnap.data();
+
+    if(data.status === "sudah"){
         alert("Token sudah digunakan!");
         return;
     }
+
+    localStorage.setItem("tokenAktif", token);
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("quizForm").style.display = "block";
+    document.getElementById("submitBtn").style.display = "block";
+    document.getElementById("timer").style.display = "block";
+
+    alert("Login berhasil!");
+}
 
     localStorage.setItem("tokenAktif", token);
 
@@ -199,6 +219,9 @@ window.submitQuiz = async function(){
             token: token,
             skor: score,
             waktu: new Date().toLocaleString()
+            const tokenRef = doc(db, "token", token);
+await updateDoc(tokenRef, {
+    status: "sudah"     
         });
 
         sudahSubmit = true;
