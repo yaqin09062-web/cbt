@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CBT Sederhana</title>
+
 <style>
 body {
     font-family: Arial;
@@ -34,19 +35,49 @@ button {
     border: none;
     border-radius: 5px;
 }
+input {
+    width: 100%;
+    padding: 8px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="container">
     <h2>CBT Sederhana</h2>
+
     <div class="timer" id="timer">30:00</div>
-    <form id="quizForm"><input type="text" id="nama" placeholder="Masukkan Nama" required><br><br></form>
+
+    <form id="quizForm">
+        <input type="text" id="nama" placeholder="Masukkan Nama" required><br><br>
+    </form>
+
     <button onclick="submitQuiz()">Submit</button>
+
     <h3 id="result"></h3>
 </div>
 
-<script>
+<!-- ================= FIREBASE + CBT ================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+// CONFIG FIREBASE (SUDAH TERISI)
+const firebaseConfig = {
+  apiKey: "AIzaSyCNESmtPeWPk8eHNeB5URH36upWMIQ7LcY",
+  authDomain: "cbt-sekolah-71151.firebaseapp.com",
+  projectId: "cbt-sekolah-71151",
+  storageBucket: "cbt-sekolah-71151.firebasestorage.app",
+  messagingSenderId: "583326728541",
+  appId: "1:583326728541:web:ab60ee0d730bd85279a8b4"
+};
+
+// INISIALISASI
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ================= SOAL =================
 const questions = [
 {q:"2+2=?", o:["3","4","5","6"], a:1},
 {q:"Ibukota Indonesia?", o:["Bandung","Jakarta","Surabaya","Medan"], a:1},
@@ -75,7 +106,7 @@ questions.forEach((item, i) => {
     form.appendChild(div);
 });
 
-// TIMER 30 MENIT
+// ================= TIMER =================
 let time = 1800;
 const timerEl = document.getElementById("timer");
 
@@ -91,8 +122,16 @@ const countdown = setInterval(() => {
     }
 }, 1000);
 
-function submitQuiz(){
+// ================= SUBMIT =================
+window.submitQuiz = async function(){
     let score = 0;
+    let nama = document.getElementById("nama").value;
+
+    if(!nama){
+        alert("Nama wajib diisi!");
+        return;
+    }
+
     questions.forEach((q, i) => {
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(ans && parseInt(ans.value) === q.a){
@@ -102,6 +141,18 @@ function submitQuiz(){
 
     document.getElementById("result").innerHTML =
         `Skor Anda: ${score} / ${questions.length}`;
+
+    // kirim ke Firebase
+    try {
+        await addDoc(collection(db, "hasil"), {
+            nama: nama,
+            skor: score,
+            waktu: new Date()
+        });
+        console.log("Data tersimpan");
+    } catch (e) {
+        console.error("Error:", e);
+    }
 }
 </script>
 
