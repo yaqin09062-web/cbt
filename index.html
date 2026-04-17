@@ -125,6 +125,11 @@ const countdown = setInterval(() => {
 // ================= SUBMIT =================
 window.submitQuiz = async function(){
     let score = 0;
+    let sudahSubmit = false;
+
+window.submitQuiz = async function(){
+    if(sudahSubmit) return;
+    sudahSubmit = true;
     let nama = document.getElementById("nama").value;
 
     if(!nama){
