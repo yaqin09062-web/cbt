@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT Sederhana</title>
+<style>
+body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f4f4f4;
+}
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: auto;
+}
+h2 { text-align: center; }
+.timer {
+    text-align: right;
+    font-weight: bold;
+    color: red;
+}
+.question {
+    margin-bottom: 15px;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    background: blue;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>CBT Sederhana</h2>
+    <div class="timer" id="timer">30:00</div>
+    <form id="quizForm"><input type="text" id="nama" placeholder="Masukkan Nama" required><br><br></form>
+    <button onclick="submitQuiz()">Submit</button>
+    <h3 id="result"></h3>
+</div>
+
+<script>
+const questions = [
+{q:"2+2=?", o:["3","4","5","6"], a:1},
+{q:"Ibukota Indonesia?", o:["Bandung","Jakarta","Surabaya","Medan"], a:1},
+{q:"5x5=?", o:["10","20","25","30"], a:2},
+{q:"Air berwarna?", o:["Merah","Biru","Bening","Hijau"], a:2},
+{q:"Langit malam?", o:["Terang","Gelap","Putih","Hijau"], a:1},
+{q:"Hewan berkaki 4?", o:["Ayam","Kucing","Burung","Ikan"], a:1},
+{q:"1+9=?", o:["8","9","10","11"], a:2},
+{q:"API itu?", o:["Air","Panas","Dingin","Angin"], a:1},
+{q:"Matahari terbit di?", o:["Barat","Utara","Timur","Selatan"], a:2},
+{q:"3x3=?", o:["6","7","8","9"], a:3}
+];
+
+// acak soal
+questions.sort(() => Math.random() - 0.5);
+
+const form = document.getElementById("quizForm");
+
+questions.forEach((item, i) => {
+    let div = document.createElement("div");
+    div.classList.add("question");
+    div.innerHTML = `<p>${i+1}. ${item.q}</p>` +
+        item.o.map((opt, j) =>
+            `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label><br>`
+        ).join("");
+    form.appendChild(div);
+});
+
+// TIMER 30 MENIT
+let time = 1800;
+const timerEl = document.getElementById("timer");
+
+const countdown = setInterval(() => {
+    let m = Math.floor(time/60);
+    let s = time % 60;
+    timerEl.innerHTML = `${m}:${s<10?"0":""}${s}`;
+    time--;
+
+    if(time < 0){
+        clearInterval(countdown);
+        submitQuiz();
+    }
+}, 1000);
+
+function submitQuiz(){
+    let score = 0;
+    questions.forEach((q, i) => {
+        let ans = document.querySelector(`input[name=q${i}]:checked`);
+        if(ans && parseInt(ans.value) === q.a){
+            score++;
+        }
+    });
+
+    document.getElementById("result").innerHTML =
+        `Skor Anda: ${score} / ${questions.length}`;
+}
+</script>
+
+</body>
+</html>
