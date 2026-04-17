@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Guru</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f4f4f4;
+    padding: 20px;
+}
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+th {
+    background: #007bff;
+    color: white;
+}
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    background: green;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#loginBox {
+    max-width: 300px;
+    margin: auto;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginBox">
+    <h3>Login Guru</h3>
+    <input type="password" id="password" placeholder="Masukkan Password"><br><br>
+    <button onclick="login()">Masuk</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container" id="dashboard" style="display:none;">
+    <h2>Dashboard Hasil CBT</h2>
+
+    <button onclick="exportExcel()">Export Excel</button>
+    <button onclick="logout()">Logout</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Token</th>
+                <th>Skor</th>
+                <th>Waktu</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+    </table>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNESmtPeWPk8eHNeB5URH36upWMIQ7LcY",
+  authDomain: "cbt-sekolah-71151.firebaseapp.com",
+  projectId: "cbt-sekolah-71151",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const table = document.getElementById("dataTable");
+
+let dataSiswa = [];
+
+// ================= LOGIN =================
+window.login = function(){
+    let pass = document.getElementById("password").value;
+
+    // 🔑 GANTI PASSWORD DI SINI
+    if(pass === "guru123"){
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+    } else {
+        alert("Password salah!");
+    }
+}
+
+// ================= LOGOUT =================
+window.logout = function(){
+    location.reload();
+}
+
+// ================= REALTIME DATA =================
+onSnapshot(collection(db, "hasil"), (snapshot) => {
+    table.innerHTML = "";
+    dataSiswa = [];
+
+    snapshot.forEach(doc => {
+        let data = doc.data();
+
+        dataSiswa.push(data);
+
+        let row = `
+        <tr>
+            <td>${data.nama}</td>
+            <td>${data.token}</td>
+            <td>${data.skor}</td>
+            <td>${data.waktu}</td>
+        </tr>
+        `;
+
+        table.innerHTML += row;
+    });
+});
+
+// ================= EXPORT EXCEL =================
+window.exportExcel = function(){
+    let csv = "Nama,Token,Skor,Waktu\n";
+
+    dataSiswa.forEach(d => {
+        csv += `${d.nama},${d.token},${d.skor},${d.waktu}\n`;
+    });
+
+    let blob = new Blob([csv], { type: "text/csv" });
+    let url = window.URL.createObjectURL(blob);
+
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "hasil_cbt.csv";
+    a.click();
+}
+</script>
+
+</body>
+</html>
