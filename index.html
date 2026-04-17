@@ -124,12 +124,15 @@ const countdown = setInterval(() => {
 
 // ================= SUBMIT =================
     let sudahSubmit = false;
-
+    let sudahSubmit = localStorage.getItem("sudahSubmit") === "true";
 window.submitQuiz = async function(){
 
-    if(sudahSubmit) return;
+    if(sudahSubmit){
+        alert("Anda sudah mengerjakan ujian ini!");
+    return;
+localStorage.setItem("sudahSubmit", "true");
+    }
     sudahSubmit = true;
-
     let score = 0;
     let nama = document.getElementById("nama").value;
 
