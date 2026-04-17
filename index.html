@@ -38,6 +38,7 @@ button {
 input {
     width: 100%;
     padding: 8px;
+    margin-bottom: 10px;
 }
 </style>
 </head>
@@ -47,13 +48,22 @@ input {
 <div class="container">
     <h2>CBT Sederhana</h2>
 
-    <div class="timer" id="timer">30:00</div>
+    <!-- LOGIN -->
+    <div id="loginBox">
+        <input type="text" id="token" placeholder="Masukkan Token Ujian">
+        <button onclick="login()">Masuk</button>
+    </div>
 
-    <form id="quizForm">
-        <input type="text" id="nama" placeholder="Masukkan Nama" required><br><br>
+    <!-- TIMER -->
+    <div class="timer" id="timer" style="display:none;">30:00</div>
+
+    <!-- FORM -->
+    <form id="quizForm" style="display:none;">
+        <input type="text" id="nama" placeholder="Masukkan Nama" required><br>
     </form>
 
-    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+    <!-- BUTTON -->
+    <button id="submitBtn" onclick="submitQuiz()" style="display:none;">Submit</button>
 
     <h3 id="result"></h3>
 </div>
@@ -73,6 +83,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ================= TOKEN =================
+const daftarToken = ["AHMAD01","SITI02","BUDI03"];
+
+window.login = function(){
+    let token = document.getElementById("token").value.toUpperCase();
+
+    if(!daftarToken.includes(token)){
+        alert("Token tidak valid!");
+        return;
+    }
+
+    if(localStorage.getItem("token_"+token)){
+        alert("Token sudah digunakan!");
+        return;
+    }
+
+    localStorage.setItem("tokenAktif", token);
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("quizForm").style.display = "block";
+    document.getElementById("submitBtn").style.display = "block";
+    document.getElementById("timer").style.display = "block";
+
+    alert("Login berhasil!");
+}
 
 // ================= SOAL =================
 const questions = [
@@ -130,15 +166,15 @@ window.submitQuiz = async function(){
         return;
     }
 
-    let score = 0;
+    let token = localStorage.getItem("tokenAktif");
     let nama = document.getElementById("nama").value;
+    let score = 0;
 
     if(!nama){
         alert("Nama wajib diisi!");
         return;
     }
 
-    // VALIDASI SEMUA SOAL
     for(let i = 0; i < questions.length; i++){
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(!ans){
@@ -147,7 +183,6 @@ window.submitQuiz = async function(){
         }
     }
 
-    // HITUNG SKOR
     questions.forEach((q, i) => {
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(ans && parseInt(ans.value) === q.a){
@@ -161,14 +196,15 @@ window.submitQuiz = async function(){
     try {
         await addDoc(collection(db, "hasil"), {
             nama: nama,
+            token: token,
             skor: score,
             waktu: new Date().toLocaleString()
         });
 
         sudahSubmit = true;
         localStorage.setItem("sudahSubmit", "true");
+        localStorage.setItem("token_"+token, "sudah");
 
-        // LOCK UI
         document.querySelectorAll("input").forEach(el => el.disabled = true);
         document.getElementById("submitBtn").disabled = true;
 
