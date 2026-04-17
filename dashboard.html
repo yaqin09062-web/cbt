@@ -42,6 +42,11 @@ button {
     margin: auto;
     text-align: center;
 }
+input {
+    padding: 8px;
+    margin: 5px;
+    width: 100%;
+}
 </style>
 </head>
 
@@ -50,7 +55,7 @@ button {
 <!-- LOGIN -->
 <div id="loginBox">
     <h3>Login Guru</h3>
-    <input type="password" id="password" placeholder="Masukkan Password"><br><br>
+    <input type="password" id="password" placeholder="Masukkan Password"><br>
     <button onclick="login()">Masuk</button>
 </div>
 
@@ -58,7 +63,7 @@ button {
 <div class="container" id="dashboard" style="display:none;">
     <h2>Dashboard Hasil CBT</h2>
 
-    <button onclick="exportExcel()">Export Excel</button>
+    <button onclick="exportExcel()">Export CSV</button>
     <button onclick="logout()">Logout</button>
 
     <table>
@@ -72,12 +77,37 @@ button {
         </thead>
         <tbody id="dataTable"></tbody>
     </table>
+
+    <hr>
+
+    <!-- UPLOAD SOAL -->
+    <h3>Upload Soal (CSV)</h3>
+    <input type="file" id="fileSoal">
+    <button onclick="uploadSoal()">Upload Soal</button>
+
+    <hr>
+
+    <!-- TAMBAH SISWA -->
+    <h3>Tambah Siswa</h3>
+    <input type="text" id="namaSiswa" placeholder="Nama Siswa">
+    <input type="text" id="rombel" placeholder="Rombel">
+    <button onclick="tambahSiswa()">Tambah Siswa</button>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
+import { 
+    getFirestore, 
+    collection, 
+    onSnapshot, 
+    addDoc, 
+    setDoc, 
+    doc 
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+// ================= INIT =================
 const firebaseConfig = {
   apiKey: "AIzaSyCNESmtPeWPk8eHNeB5URH36upWMIQ7LcY",
   authDomain: "cbt-sekolah-71151.firebaseapp.com",
@@ -88,14 +118,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const table = document.getElementById("dataTable");
-
 let dataSiswa = [];
 
 // ================= LOGIN =================
 window.login = function(){
     let pass = document.getElementById("password").value;
 
-    // 🔑 GANTI PASSWORD DI SINI
     if(pass === "guru123"){
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
@@ -116,7 +144,6 @@ onSnapshot(collection(db, "hasil"), (snapshot) => {
 
     snapshot.forEach(doc => {
         let data = doc.data();
-
         dataSiswa.push(data);
 
         let row = `
@@ -132,7 +159,7 @@ onSnapshot(collection(db, "hasil"), (snapshot) => {
     });
 });
 
-// ================= EXPORT EXCEL =================
+// ================= EXPORT CSV =================
 window.exportExcel = function(){
     let csv = "Nama,Token,Skor,Waktu\n";
 
@@ -147,6 +174,60 @@ window.exportExcel = function(){
     a.href = url;
     a.download = "hasil_cbt.csv";
     a.click();
+}
+
+// ================= UPLOAD SOAL =================
+window.uploadSoal = async function(){
+    let file = document.getElementById("fileSoal").files[0];
+
+    if(!file){
+        alert("Pilih file dulu!");
+        return;
+    }
+
+    let text = await file.text();
+    let rows = text.trim().split("\n");
+
+    for(let i = 1; i < rows.length; i++){
+        let col = rows[i].split(",").map(x => x.trim());
+
+        if(col.length < 6) continue;
+
+        await addDoc(collection(db, "soal"), {
+            soal: col[0],
+            opsi: [col[1], col[2], col[3], col[4]],
+            jawaban: parseInt(col[5])
+        });
+    }
+
+    alert("Soal berhasil diupload!");
+}
+
+// ================= TAMBAH SISWA =================
+window.tambahSiswa = async function(){
+    let nama = document.getElementById("namaSiswa").value;
+    let rombel = document.getElementById("rombel").value;
+
+    if(!nama || !rombel){
+        alert("Isi semua data!");
+        return;
+    }
+
+    let token = nama.toUpperCase().replace(/\s/g, "").substring(0,5)
+               + Date.now().toString().slice(-4);
+
+    await addDoc(collection(db, "siswa"), {
+        nama: nama,
+        rombel: rombel,
+        token: token
+    });
+
+    await setDoc(doc(db, "token", token), {
+        status: "belum",
+        rombel: rombel
+    });
+
+    alert("Siswa berhasil ditambahkan! Token: " + token);
 }
 </script>
 
