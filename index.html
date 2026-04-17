@@ -53,17 +53,15 @@ input {
         <input type="text" id="nama" placeholder="Masukkan Nama" required><br><br>
     </form>
 
-    <button onclick="submitQuiz()">Submit</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
 
     <h3 id="result"></h3>
 </div>
 
-<!-- ================= FIREBASE + CBT ================= -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-// CONFIG FIREBASE (SUDAH TERISI)
 const firebaseConfig = {
   apiKey: "AIzaSyCNESmtPeWPk8eHNeB5URH36upWMIQ7LcY",
   authDomain: "cbt-sekolah-71151.firebaseapp.com",
@@ -73,7 +71,6 @@ const firebaseConfig = {
   appId: "1:583326728541:web:ab60ee0d730bd85279a8b4"
 };
 
-// INISIALISASI
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -91,7 +88,6 @@ const questions = [
 {q:"3x3=?", o:["6","7","8","9"], a:3}
 ];
 
-// acak soal
 questions.sort(() => Math.random() - 0.5);
 
 const form = document.getElementById("quizForm");
@@ -110,6 +106,8 @@ questions.forEach((item, i) => {
 let time = 1800;
 const timerEl = document.getElementById("timer");
 
+let sudahSubmit = localStorage.getItem("sudahSubmit") === "true";
+
 const countdown = setInterval(() => {
     let m = Math.floor(time/60);
     let s = time % 60;
@@ -118,13 +116,13 @@ const countdown = setInterval(() => {
 
     if(time < 0){
         clearInterval(countdown);
-        submitQuiz();
+        if(!sudahSubmit){
+            submitQuiz();
+        }
     }
 }, 1000);
 
 // ================= SUBMIT =================
-let sudahSubmit = localStorage.getItem("sudahSubmit") === "true";
-
 window.submitQuiz = async function(){
 
     if(sudahSubmit){
@@ -140,7 +138,7 @@ window.submitQuiz = async function(){
         return;
     }
 
-    // cek semua soal sudah dijawab
+    // VALIDASI SEMUA SOAL
     for(let i = 0; i < questions.length; i++){
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(!ans){
@@ -149,7 +147,7 @@ window.submitQuiz = async function(){
         }
     }
 
-    // hitung skor
+    // HITUNG SKOR
     questions.forEach((q, i) => {
         let ans = document.querySelector(`input[name=q${i}]:checked`);
         if(ans && parseInt(ans.value) === q.a){
@@ -160,7 +158,6 @@ window.submitQuiz = async function(){
     document.getElementById("result").innerHTML =
         `Skor Anda: ${score} / ${questions.length}`;
 
-    // simpan ke Firebase
     try {
         await addDoc(collection(db, "hasil"), {
             nama: nama,
@@ -168,12 +165,12 @@ window.submitQuiz = async function(){
             waktu: new Date().toLocaleString()
         });
 
-        // ✅ tandai sudah submit (di SINI yang benar)
         sudahSubmit = true;
         localStorage.setItem("sudahSubmit", "true");
 
-        // disable tombol
-        document.querySelector("button").disabled = true;
+        // LOCK UI
+        document.querySelectorAll("input").forEach(el => el.disabled = true);
+        document.getElementById("submitBtn").disabled = true;
 
         alert("Jawaban berhasil dikirim!");
 
